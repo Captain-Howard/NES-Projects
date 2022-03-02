@@ -1,19 +1,19 @@
 .segment "HEADER"
 .byte "NES"
 .byte $1a
-.byte $02 ; 2 * 16KB PRG ROM
-.byte $01 ; 1 * 8KB CHR ROM
-.byte %00000001 ; mapper and mirroring
+.byte $02
+.byte $01
+.byte %00000001 
 .byte $00
 .byte $00
 .byte $00
 .byte $00
-.byte $00, $00, $00, $00, $00 ; filler bytes
-.segment "ZEROPAGE" ; LSB 0 - FF
+.byte $00, $00, $00, $00, $00
+.segment "ZEROPAGE" 
 .segment "STARTUP"
 Reset:
-    SEI ; Disables all interrupts
-    CLD ; disable decimal mode
+    SEI 
+    CLD 
 
     ; Disable sound IRQ
     LDX #$40
@@ -23,7 +23,7 @@ Reset:
     LDX #$FF
     TXS
 
-    INX ; #$FF + 1 => #$00
+    INX
 
     ; Zero out the PPU registers
     STX $2000
@@ -38,19 +38,21 @@ Reset:
     TXA
 
 CLEARMEM:
-    STA $0000, X ; $0000 => $00FF
-    STA $0100, X ; $0100 => $01FF
+    STA $0000, X 
+    STA $0100, X 
     STA $0300, X
     STA $0400, X
     STA $0500, X
     STA $0600, X
     STA $0700, X
     LDA #$FF
-    STA $0200, X ; $0200 => $02FF
+    STA $0200, X
     LDA #$00
     INX
-    BNE CLEARMEM    
+    BNE CLEARMEM  
+    
 ; wait for vblank
+
 :
     BIT $2002
     BPL :-
@@ -59,7 +61,6 @@ CLEARMEM:
     STA $4014
     NOP
 
-    ; $3F00
     LDA #$3F
     STA $2006
     LDA #$00
@@ -69,12 +70,13 @@ CLEARMEM:
 
 LoadPalettes:
     LDA PaletteData, X
-    STA $2007 ; $3F00, $3F01, $3F02 => $3F1F
+    STA $2007 
     INX
     CPX #$20
     BNE LoadPalettes    
 
     LDX #$00
+    
 LoadSprites:
     LDA SpriteData, X
     STA $0200, X
@@ -82,13 +84,6 @@ LoadSprites:
     CPX #$20
     BNE LoadSprites    
 
-; Clear the nametables- this isn't necessary in most emulators unless
-; you turn on random memory power-on mode, but on real hardware
-; not doing this means that the background / nametable will have
-; random garbage on screen. This clears out nametables starting at
-; $2000 and continuing on to $2400 (which is fine because we have
-; vertical mirroring on. If we used horizontal, we'd have to do
-; this for $2000 and $2800)
     LDX #$00
     LDY #$00
     LDA $2002
@@ -96,6 +91,7 @@ LoadSprites:
     STA $2006
     LDA #$00
     STA $2006
+    
 ClearNametable:
     STA $2007
     INX
@@ -107,9 +103,9 @@ ClearNametable:
 ; Enable interrupts
     CLI
 
-    LDA #%10010000 ; enable NMI change background to use second chr set of tiles ($1000)
+    LDA #%10010000
     STA $2000
-    ; Enabling sprites and background for left-most 8 pixels
+    
     ; Enable sprites and background
     LDA #%00011110
     STA $2001
@@ -118,7 +114,7 @@ Loop:
     JMP Loop
 
 NMI:
-    LDA #$02 ; copy sprite data from $0200 => PPU memory for display
+    LDA #$02 
     STA $4014
     RTI
 
@@ -139,6 +135,6 @@ SpriteData:
 .segment "VECTORS"
     .word NMI
     .word Reset
-    ; 
+     
 .segment "CHARS"
     .incbin "mariotest.chr"
